@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -10,7 +12,6 @@ import {
 import { ArrowRight, Droplet, Guitar, ShieldCheck, Wrench, Activity, CheckCircle2, Check, Award, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
 
 export default function LandingPage() {
   // Simulación de fotos del portafolio (Luego las cambiarás por las reales de Emedius)
@@ -35,13 +36,19 @@ export default function LandingPage() {
 
   const educationalImage = "/portfolio/educational.jpg";
 
+  // NUEVO: Función para redirigir a WhatsApp de manera dinámica
+  const handleWhatsAppClick = (mensaje: string) => {
+    const numeroEmedius = "524775615105"; // <-- CAMBIA ESTO POR EL NÚMERO REAL
+    const url = `https://wa.me/${numeroEmedius}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank"); // Abre en una nueva pestaña
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
       
       {/* Barra de Navegación */}
       <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto relative z-20">
         <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-amber-600 dark:text-amber-500">
-          {/* Contenedor del logo redondeado con un borde sutil */}
           <div className="relative w-10 h-10 overflow-hidden rounded-full border border-amber-600/30 shadow-sm bg-white dark:bg-zinc-900">
             <Image 
               src="/logo.jpg" 
@@ -59,20 +66,16 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <main className="relative flex flex-col items-center justify-center text-center px-6 py-32 md:py-48 overflow-hidden">
-        
-        {/* 1. Imagen de Fondo (Optimizada y priorizada) */}
         <Image
           src="/hero.jpg"
           alt="Taller de mantenimiento de guitarras"
           fill
-          priority // Le dice a Next.js que cargue esta imagen antes que cualquier otra cosa
+          priority
           className="object-cover object-center"
         />
         
-        {/* 2. Filtro/Overlay Oscurecedor (Gradiente de arriba hacia abajo) */}
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/70 to-zinc-50 dark:to-zinc-950 z-0"></div>
 
-        {/* 3. Contenido (Con z-index para que flote sobre la imagen y textos forzados a blanco) */}
         <div className="relative z-10 flex flex-col items-center">
           <div className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-sm text-amber-200 backdrop-blur-md mb-8">
             <span className="flex h-2 w-2 rounded-full bg-amber-500 mr-2 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
@@ -88,7 +91,12 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-amber-600 hover:bg-amber-500 text-white gap-2 text-md shadow-lg shadow-amber-900/20 border-0">
+            {/* NUEVO: Botón del Hero con mensaje general */}
+            <Button 
+              size="lg" 
+              className="bg-amber-600 hover:bg-amber-500 text-white gap-2 text-md shadow-lg shadow-amber-900/20 border-0"
+              onClick={() => handleWhatsAppClick("¡Hola Emedius! Me gustaría agendar una revisión para mi instrumento en el taller.")}
+            >
               Agendar Revisión <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -130,7 +138,6 @@ export default function LandingPage() {
                 <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     <Card className="overflow-hidden border-0 shadow-sm">
-                      {/* aspect-square mantiene las fotos en un cuadro perfecto para Instagram style */}
                       <CardContent className="relative flex aspect-square items-center justify-center p-0 bg-zinc-200 dark:bg-zinc-800">
                         <Image 
                           src={imagePath} 
@@ -181,20 +188,24 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full" variant="outline">Agendar Huesero</Button>
+                {/* NUEVO: Botón Pa'l Huesero */}
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => handleWhatsAppClick("¡Hola! Me interesa agendar el paquete de mantenimiento básico 'Pa'l Huesero' para mi instrumento.")}
+                >
+                  Agendar Huesero
+                </Button>
               </div>
             </Card>
 
             {/* Paquete 2: Pa'l Rockstar (Destacado) */}
             <Card className="border-amber-500 shadow-xl shadow-amber-900/10 relative flex flex-col bg-zinc-900 text-zinc-50 scale-100 md:scale-105 z-10 overflow-visible mt-6 md:mt-0">
-              
-              {/* Badge Recomendado (Ajustado) */}
               <div className="absolute -top-3.5 left-0 w-full flex justify-center">
                 <span className="bg-amber-500 text-amber-950 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md">
                   Full Service
                 </span>
               </div>
-              
               <CardHeader className="text-center pb-8 border-b border-zinc-800">
                 <CardTitle className="text-2xl font-bold text-amber-500">Pa'l Rockstar</CardTitle>
                 <CardDescription className="mt-2 text-zinc-400">Tratamiento VIP para dejar tu instrumento como recién salido de fábrica.</CardDescription>
@@ -211,7 +222,13 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0">Agendar Rockstar</Button>
+                {/* NUEVO: Botón Pa'l Rockstar */}
+                <Button 
+                  className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0"
+                  onClick={() => handleWhatsAppClick("¡Hola! Me interesa agendar el tratamiento VIP 'Pa'l Rockstar' para dejar mi instrumento al 100.")}
+                >
+                  Agendar Rockstar
+                </Button>
               </div>
             </Card>
 
@@ -219,7 +236,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección Educativa: Por qué el mantenimiento importa */}
+      {/* Sección Educativa */}
       <section className="py-24 max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
@@ -244,7 +261,6 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          {/* Imagen ilustrativa al lado del texto */}
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-zinc-200 dark:border-zinc-800">
             <Image 
               src={educationalImage} 
@@ -257,7 +273,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección: Por qué elegir Emedius (Confianza) */}
+      {/* La Diferencia Emedius */}
       <section className="bg-zinc-900 text-zinc-50 py-24">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight mb-16">La Diferencia Emedius</h2>

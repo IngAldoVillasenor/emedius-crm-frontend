@@ -27,9 +27,17 @@ interface ServiceOrder {
   customerName?: string;
 }
 
+// NUEVO: Necesitamos a los clientes para el dropdown
+interface Customer {
+  id: string;
+  name: string;
+}
+
 export default function InstrumentosPage() {
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]); // NUEVO
+  
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -39,28 +47,63 @@ export default function InstrumentosPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCustomType, setShowCustomType] = useState(false);
 
+  // Estados para el formulario de Creación
+  const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewCustomType, setShowNewCustomType] = useState(false);
+  const [newInst, setNewInst] = useState({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "" });
+
   const [editData, setEditData] = useState({ brand: "", model: "", type: "" });
 
   const selectClasses = "flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300";
 
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      // NUEVO: Traemos también a los clientes
+      const [instData, ordData, custData] = await Promise.all([
+        fetchFromAPI("/instruments").catch(() => []),
+        fetchFromAPI("/service-orders").catch(() => []),
+        fetchFromAPI("/customers").catch(() => [])
+      ]);
+      setInstruments(instData);
+      setOrders(ordData);
+      setCustomers(custData);
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const [instData, ordData] = await Promise.all([
-          fetchFromAPI("/instruments").catch(() => []),
-          fetchFromAPI("/service-orders").catch(() => [])
-        ]);
-        setInstruments(instData);
-        setOrders(ordData);
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadData();
   }, []);
+
+  // NUEVO: Función para guardar un instrumento nuevo
+  const handleCreateInstrument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await fetchFromAPI("/instruments", {
+        method: "POST",
+        body: JSON.stringify(newInst),
+      });
+
+      // Limpiamos y ocultamos el formulario
+      setNewInst({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "" });
+      setShowForm(false);
+      setShowNewCustomType(false);
+      
+      // Recargamos los datos
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Error al crear el instrumento.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleUpdateInstrument = async () => {
     if (!selectedInstrument) return;
@@ -104,7 +147,6 @@ export default function InstrumentosPage() {
   const openInstrumentDetails = (instrument: Instrument) => {
     setSelectedInstrument(instrument);
     
-    // CORRECCIÓN: Usamos los valores exactos de la BD
     const typeVal = instrument.type || "Guitarra Eléctrica";
     const isCustom = !["Guitarra Eléctrica", "Guitarra Acústica", "Bajo Eléctrico"].includes(typeVal);
     
@@ -137,11 +179,92 @@ export default function InstrumentosPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-amber-600 hover:bg-amber-700 text-white gap-2">
-            <Plus className="w-4 h-4" /> Nuevo Instrumento
+          {/* NUEVO: El botón ahora sí abre el formulario */}
+          <Button onClick={() => setShowForm(!showForm)} className="bg-amber-600 hover:bg-amber-700 text-white gap-2">
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} 
+            {showForm ? "Cancelar" : "Nuevo Instrumento"}
           </Button>
         </div>
       </div>
+
+      {/* NUEVO: Formulario de Creación (Igual que en Clientes) */}
+      {showForm && (
+        <Card className="border-amber-500/30 shadow-md max-w-2xl animate-in fade-in slide-in-from-top-4 duration-200">
+          <CardHeader>
+            <CardTitle className="text-lg">Registrar Nuevo Instrumento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreateInstrument} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Marca</Label>
+                  <Input value={newInst.brand} onChange={(e) => setNewInst({...newInst, brand: e.target.value})} placeholder="Ej. Fender" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Modelo</Label>
+                  <Input value={newInst.model} onChange={(e) => setNewInst({...newInst, model: e.target.value})} placeholder="Ej. Stratocaster" required />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo / Categoría</Label>
+                  <select
+                    className={selectClasses}
+                    value={showNewCustomType ? "Otros" : newInst.type}
+                    onChange={(e) => {
+                      if (e.target.value === "Otros") {
+                        setShowNewCustomType(true);
+                        setNewInst({ ...newInst, type: "" }); 
+                      } else {
+                        setShowNewCustomType(false);
+                        setNewInst({ ...newInst, type: e.target.value });
+                      }
+                    }}
+                  >
+                    <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
+                    <option value="Guitarra Acústica">Guitarra Acústica</option>
+                    <option value="Bajo Eléctrico">Bajo Eléctrico</option>
+                    <option value="Otros">Otros (Especificar)...</option>
+                  </select>
+
+                  {showNewCustomType && (
+                    <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                      <Input
+                        value={newInst.type}
+                        onChange={(e) => setNewInst({...newInst, type: e.target.value})}
+                        placeholder="Ej. Ukulele, Cello..."
+                        required={showNewCustomType}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Propietario (Cliente)</Label>
+                  <select 
+                    className={selectClasses} 
+                    value={newInst.customerId} 
+                    onChange={(e) => setNewInst({...newInst, customerId: e.target.value})}
+                    required
+                  >
+                    <option value="" disabled>Selecciona al dueño...</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-4">
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Guardar Instrumento
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>
@@ -228,7 +351,6 @@ export default function InstrumentosPage() {
                     }
                   }}
                 >
-                  {/* CORRECCIÓN: Opciones exactas como en la base de datos */}
                   <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
                   <option value="Guitarra Acústica">Guitarra Acústica</option>
                   <option value="Bajo Eléctrico">Bajo Eléctrico</option>
