@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -9,53 +10,60 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-import { ArrowRight, Droplet, Guitar, ShieldCheck, Wrench, Activity, CheckCircle2, Check, Award, AlertTriangle } from "lucide-react";
+import { ArrowRight, Droplet, Guitar, ShieldCheck, Wrench, Activity, CheckCircle2, Check, Award, AlertTriangle, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { PopupModal } from "react-calendly";
 
 export default function LandingPage() {
-  // Simulación de fotos del portafolio (Luego las cambiarás por las reales de Emedius)
   const allPortfolioImages = [
-    "/portfolio/1.jpg", 
-    "/portfolio/2.jpg", 
-    "/portfolio/3.jpg", 
-    "/portfolio/4.jpg",
-    "/portfolio/5.jpg",
-    "/portfolio/6.jpg",
-    "/portfolio/7.jpg",
-    "/portfolio/8.jpg",
-    "/portfolio/9.jpg",
-    "/portfolio/10.jpg",
-    "/portfolio/11.jpg",
-    "/portfolio/12.jpg",
+    "/portfolio/1.jpg", "/portfolio/2.jpg", "/portfolio/3.jpg", "/portfolio/4.jpg",
+    "/portfolio/5.jpg", "/portfolio/6.jpg", "/portfolio/7.jpg", "/portfolio/8.jpg",
+    "/portfolio/9.jpg", "/portfolio/10.jpg", "/portfolio/11.jpg", "/portfolio/12.jpg",
   ];
 
-  const randomImages = [...allPortfolioImages]
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 4);
-
+  const randomImages = [...allPortfolioImages].sort(() => 0.5 - Math.random()).slice(0, 4);
   const educationalImage = "/portfolio/educational.jpg";
 
-  // NUEVO: Función para redirigir a WhatsApp de manera dinámica
-  const handleWhatsAppClick = (mensaje: string) => {
-    const numeroEmedius = "524775615105"; // <-- CAMBIA ESTO POR EL NÚMERO REAL
-    const url = `https://wa.me/${numeroEmedius}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, "_blank"); // Abre en una nueva pestaña
+  // --- ESTADOS PARA CALENDLY ---
+  const [isCalendlyOpen, setIsCalendlyOpen] = useState(false);
+  const [calendlyUrl, setCalendlyUrl] = useState("");
+  const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRootElement(document.body);
+    }
+  }, []);
+
+  const openCalendly = (eventType: string, prefillMessage?: string) => {
+    let url = `https://calendly.com/emediusgw/${eventType}`;
+    
+    if (prefillMessage) {
+      url += `?a1=${encodeURIComponent(prefillMessage)}`;
+    }
+    
+    setCalendlyUrl(url);
+    setIsCalendlyOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
       
+      {rootElement && (
+        <PopupModal
+          url={calendlyUrl}
+          onModalClose={() => setIsCalendlyOpen(false)}
+          open={isCalendlyOpen}
+          rootElement={rootElement}
+        />
+      )}
+
       {/* Barra de Navegación */}
       <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto relative z-20">
         <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-amber-600 dark:text-amber-500">
           <div className="relative w-10 h-10 overflow-hidden rounded-full border border-amber-600/30 shadow-sm bg-white dark:bg-zinc-900">
-            <Image 
-              src="/logo.jpg" 
-              alt="Emedius Workshop Logo" 
-              fill 
-              className="object-cover" 
-            />
+            <Image src="/logo.jpg" alt="Emedius Workshop Logo" fill className="object-cover" />
           </div>
           <span>Emedius Workshop</span>
         </div>
@@ -66,14 +74,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <main className="relative flex flex-col items-center justify-center text-center px-6 py-32 md:py-48 overflow-hidden">
-        <Image
-          src="/hero.jpg"
-          alt="Taller de mantenimiento de guitarras"
-          fill
-          priority
-          className="object-cover object-center"
-        />
-        
+        <Image src="/hero.jpg" alt="Taller de mantenimiento de guitarras" fill priority className="object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/70 to-zinc-50 dark:to-zinc-950 z-0"></div>
 
         <div className="relative z-10 flex flex-col items-center">
@@ -91,11 +92,10 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* NUEVO: Botón del Hero con mensaje general */}
             <Button 
               size="lg" 
               className="bg-amber-600 hover:bg-amber-500 text-white gap-2 text-md shadow-lg shadow-amber-900/20 border-0"
-              onClick={() => handleWhatsAppClick("¡Hola Emedius! Me gustaría agendar una revisión para mi instrumento en el taller.")}
+              onClick={() => openCalendly("diagnostico-inicial")}
             >
               Agendar Revisión <ArrowRight className="w-4 h-4" />
             </Button>
@@ -126,7 +126,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección: El Portafolio (Carrusel) */}
+      {/* Sección: El Portafolio */}
       <section className="py-16 bg-zinc-100 dark:bg-zinc-900/50">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight mb-4">Trabajos Recientes</h2>
@@ -139,13 +139,7 @@ export default function LandingPage() {
                   <div className="p-1">
                     <Card className="overflow-hidden border-0 shadow-sm">
                       <CardContent className="relative flex aspect-square items-center justify-center p-0 bg-zinc-200 dark:bg-zinc-800">
-                        <Image 
-                          src={imagePath} 
-                          alt={`Trabajo de luthier en guitarra ${index + 1}`}
-                          fill
-                          className="object-cover transition-transform hover:scale-105 duration-500"
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                        />
+                        <Image src={imagePath} alt={`Trabajo de luthier ${index + 1}`} fill className="object-cover transition-transform hover:scale-105 duration-500" sizes="(max-width: 768px) 100vw, 33vw" />
                       </CardContent>
                     </Card>
                   </div>
@@ -158,7 +152,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección de Paquetes de Servicio */}
+      {/* Sección de Paquetes de Servicio (ACTUALIZADA) */}
       <section className="py-24 bg-zinc-50 dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -166,72 +160,115 @@ export default function LandingPage() {
             <p className="text-lg text-zinc-600 dark:text-zinc-400">Selecciona el nivel de cuidado que tu instrumento necesita.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* Cuadrícula de 4 columnas en pantallas grandes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
             
-            {/* Paquete 1: Pa'l Huesero */}
-            <Card className="border-zinc-200 dark:border-zinc-800 shadow-lg relative flex flex-col">
-              <CardHeader className="text-center pb-8 border-b border-zinc-100 dark:border-zinc-800/50">
-                <CardTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Pa'l Huesero</CardTitle>
-                <CardDescription className="mt-2">El mantenimiento de rutina ideal para mantener tu sonido al 100.</CardDescription>
+            {/* Paquete 1: Pa'l Apuro */}
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col hover:border-amber-500/50 transition-colors">
+              <CardHeader className="text-center pb-6 border-b border-zinc-100 dark:border-zinc-800/50">
+                <CardTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">Pa'l Apuro</CardTitle>
+                <div className="text-3xl font-extrabold text-amber-600 mt-4">$250 <span className="text-base text-zinc-500 font-normal">MXN*</span></div>
               </CardHeader>
-              <CardContent className="pt-8 flex-1">
-                <ul className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Octavación y Ajuste de alma</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Ajuste de clavijeros y pastillas</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Ajuste y calibración de puente</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Ajuste de salida</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Limpieza General y del instrumento</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Hidratación de diapasón</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Cambio de cuerdas</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Limpieza de potenciómetros y trastes</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-amber-600 shrink-0" /> Lubricación de Cejilla</li>
+              <CardContent className="pt-6 flex-1">
+                <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Octavación</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Ajuste de alma</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Ajuste de clavijeros</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Ajuste de pastillas</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Ajuste y calibración de puente</span></li>
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                {/* NUEVO: Botón Pa'l Huesero */}
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  onClick={() => handleWhatsAppClick("¡Hola! Me interesa agendar el paquete de mantenimiento básico 'Pa'l Huesero' para mi instrumento.")}
-                >
-                  Agendar Huesero
+                <Button className="w-full" variant="outline" onClick={() => openCalendly("recepcion", "¡Hola! Me interesa agendar la recepción para el paquete: Pa'l Apuro.")}>
+                  Agendar Pa'l Apuro
                 </Button>
               </div>
             </Card>
 
-            {/* Paquete 2: Pa'l Rockstar (Destacado) */}
-            <Card className="border-amber-500 shadow-xl shadow-amber-900/10 relative flex flex-col bg-zinc-900 text-zinc-50 scale-100 md:scale-105 z-10 overflow-visible mt-6 md:mt-0">
-              <div className="absolute -top-3.5 left-0 w-full flex justify-center">
-                <span className="bg-amber-500 text-amber-950 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md">
-                  Full Service
-                </span>
-              </div>
-              <CardHeader className="text-center pb-8 border-b border-zinc-800">
-                <CardTitle className="text-2xl font-bold text-amber-500">Pa'l Rockstar</CardTitle>
-                <CardDescription className="mt-2 text-zinc-400">Tratamiento VIP para dejar tu instrumento como recién salido de fábrica.</CardDescription>
+            {/* Paquete 2: Pa'l Huesero */}
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-md flex flex-col hover:border-amber-500/50 transition-colors bg-white dark:bg-zinc-900">
+              <CardHeader className="text-center pb-6 border-b border-zinc-100 dark:border-zinc-800/50">
+                <CardTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">Pa'l Huesero</CardTitle>
+                <div className="text-3xl font-extrabold text-amber-600 mt-4">$500 <span className="text-base text-zinc-500 font-normal">MXN*</span></div>
               </CardHeader>
-              <CardContent className="pt-8 flex-1">
-                <div className="mb-6 font-medium text-amber-400 text-sm">
-                  Incluye TODO lo del paquete Pa'l Huesero, más:
+              <CardContent className="pt-6 flex-1">
+                <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-1">
+                  <Plus className="w-3 h-3" /> Incluye Pa'l Apuro, más:
                 </div>
-                <ul className="space-y-4 text-sm text-zinc-300">
-                  <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" /> Pulido de trastes a espejo</li>
-                  <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" /> Pulido de pintura</li>
-                  <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" /> Limpieza profunda de todo el hardware</li>
-                  <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" /> Mantenimiento preventivo de electrónica</li>
+                <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Limpieza general</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Hidratación de diapasón</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Limpieza de potenciómetros</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Lubricación de cejilla</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Limpieza de trastes</span></li>
+                  <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span>Limpieza de instrumento</span></li>
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                {/* NUEVO: Botón Pa'l Rockstar */}
-                <Button 
-                  className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0"
-                  onClick={() => handleWhatsAppClick("¡Hola! Me interesa agendar el tratamiento VIP 'Pa'l Rockstar' para dejar mi instrumento al 100.")}
-                >
+                <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-white" onClick={() => openCalendly("recepcion", "¡Hola! Me interesa agendar la recepción para el paquete: Pa'l Huesero.")}>
+                  Agendar Pa'l Huesero
+                </Button>
+              </div>
+            </Card>
+
+            {/* Paquete 3: Pa'l Rockstar (Destacado) */}
+            <Card className="border-amber-500 shadow-xl shadow-amber-900/10 relative flex flex-col bg-zinc-900 text-zinc-50 overflow-visible z-10 md:scale-105">
+              <div className="absolute -top-3.5 left-0 w-full flex justify-center">
+                <span className="bg-amber-500 text-amber-950 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md">
+                  Más Popular
+                </span>
+              </div>
+              <CardHeader className="text-center pb-6 border-b border-zinc-800">
+                <CardTitle className="text-xl font-bold text-amber-500 uppercase tracking-wide mt-2">Pa'l Rockstar</CardTitle>
+                <div className="text-3xl font-extrabold text-white mt-4">$1,000 <span className="text-base text-zinc-400 font-normal">MXN*</span></div>
+              </CardHeader>
+              <CardContent className="pt-6 flex-1">
+                <div className="text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-4 flex items-center gap-1">
+                  <Plus className="w-3 h-3" /> Pa'l Apuro + Pa'l Huesero, más:
+                </div>
+                <ul className="space-y-3 text-sm text-zinc-300">
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> <span>Pulido de trastes</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> <span>Pulido de pintura</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> <span>Limpieza profunda de todo el hardware</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> <span>Mantenimiento preventivo de electrónica</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> <span>Calibración de cejilla</span></li>
+                </ul>
+              </CardContent>
+              <div className="p-6 mt-auto">
+                <Button className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0" onClick={() => openCalendly("recepcion", "¡Hola! Quiero el tratamiento completo para mi instrumento. Agendando paquete: Pa'l Rockstar.")}>
                   Agendar Rockstar
                 </Button>
               </div>
             </Card>
 
+            {/* Paquete 4: Pa' La Leyenda (Ultimate) */}
+            <Card className="border-amber-600/30 dark:border-amber-500/20 shadow-md flex flex-col bg-gradient-to-b from-zinc-50 to-amber-50/30 dark:from-zinc-950 dark:to-amber-900/10">
+              <CardHeader className="text-center pb-6 border-b border-zinc-200 dark:border-zinc-800/80">
+                <CardTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">Pa' La Leyenda</CardTitle>
+                <div className="text-3xl font-extrabold text-amber-600 mt-4">$2,000 <span className="text-base text-zinc-500 font-normal">MXN*</span></div>
+              </CardHeader>
+              <CardContent className="pt-6 flex-1">
+                <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-1">
+                  <Plus className="w-3 h-3" /> Todos los paquetes anteriores, más:
+                </div>
+                <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" /> <span className="font-semibold text-zinc-900 dark:text-zinc-100">Nivelado de trastes</span></li>
+                  <li className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 text-xs italic text-zinc-500">
+                    Soluciona problemas severos de trasteos e imperfecciones en el diapasón para una acción de cuerdas ultra baja.
+                  </li>
+                </ul>
+              </CardContent>
+              <div className="p-6 mt-auto">
+                <Button className="w-full border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white" variant="outline" onClick={() => openCalendly("recepcion", "¡Hola! Quiero el servicio definitivo para mi guitarra. Agendando paquete: Pa' La Leyenda.")}>
+                  Agendar La Leyenda
+                </Button>
+              </div>
+            </Card>
+
+          </div>
+
+          <div className="mt-12 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 inline-block px-6 py-2 rounded-full mx-auto">
+            <span className="text-amber-600 font-bold">*</span> Ningún servicio incluye cuerdas.
           </div>
         </div>
       </section>
@@ -252,7 +289,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex gap-3">
                   <Droplet className="w-6 h-6 text-amber-600 shrink-0" />
-                  <span><strong>Hidratación Profunda:</strong> En Emedius utilizamos aceites y líquidos acondicionadores de primera calidad en cada servicio. Un diapasón reseco es propenso a agrietarse y perder trastes; la hidratación le devuelve su color natural y tacto suave.</span>
+                  <span><strong>Hidratación Profunda:</strong> Utilizamos aceites y líquidos acondicionadores de primera calidad. Un diapasón reseco es propenso a agrietarse y perder trastes; la hidratación le devuelve su color natural y tacto suave.</span>
                 </li>
                 <li className="flex gap-3">
                   <ShieldCheck className="w-6 h-6 text-amber-600 shrink-0" />
@@ -262,37 +299,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-zinc-200 dark:border-zinc-800">
-            <Image 
-              src={educationalImage} 
-              alt="Mantenimiento preventivo de guitarra"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* La Diferencia Emedius */}
-      <section className="bg-zinc-900 text-zinc-50 py-24">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold tracking-tight mb-16">La Diferencia Emedius</h2>
-          <div className="grid md:grid-cols-3 gap-8 text-left">
-            <div className="p-6 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
-              <CheckCircle2 className="w-10 h-10 text-amber-500 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Herramienta Especializada</h3>
-              <p className="text-zinc-400 text-sm">No improvisamos. Utilizamos galgas de precisión, limas diamantadas y reglas con muescas específicas para garantizar medidas exactas.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
-              <CheckCircle2 className="w-10 h-10 text-amber-500 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Insumos Premium</h3>
-              <p className="text-zinc-400 text-sm">Desde los líquidos para nutrir la madera hasta el estaño para las soldaduras, usamos marcas reconocidas a nivel mundial en cada servicio.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
-              <CheckCircle2 className="w-10 h-10 text-amber-500 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Seguimiento Transparente</h3>
-              <p className="text-zinc-400 text-sm">Te mantenemos informado del estatus de tu instrumento y te entregamos un reporte detallado de las condiciones de entrada y salida.</p>
-            </div>
+            <Image src={educationalImage} alt="Mantenimiento preventivo de guitarra" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
           </div>
         </div>
       </section>
