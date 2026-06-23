@@ -47,6 +47,7 @@ const INITIAL_FORM_DATA = {
   newInstrumentModel: "",
   newInstrumentType: "Guitarra Eléctrica",
 
+  // Dejamos Pa'l Huesero como el valor por defecto por ser el estándar
   serviceType: "Pa'l Huesero",
   initialNotes: "",
 
@@ -133,7 +134,6 @@ export default function OrdenesPage() {
         (inst) => inst.customerId === formData.existingCustomerId
       );
       setFilteredInstruments(filtered);
-      // Limpiar selección de instrumento si ya no hace match
       setFormData(prev => ({ ...prev, existingInstrumentId: "" }));
     } else {
       setFilteredInstruments([]);
@@ -166,7 +166,6 @@ export default function OrdenesPage() {
     setIsSubmitting(true);
     setError("");
 
-    // Limpieza de campos para enviar JSON óptimo
     const finalPayload = { ...formData };
     if (isNewCustomer) {
       finalPayload.existingCustomerId = "";
@@ -190,7 +189,6 @@ export default function OrdenesPage() {
         body: JSON.stringify(finalPayload),
       });
 
-      // Limpiar formulario y recargar datos
       setFormData(INITIAL_FORM_DATA);
       setIsNewCustomer(false);
       setIsNewInstrument(false);
@@ -290,9 +288,7 @@ export default function OrdenesPage() {
                     const isNowNew = !isNewCustomer;
                     setIsNewCustomer(isNowNew);
                     if (isNowNew) {
-                      // Si es cliente nuevo, forzamos que el instrumento sea nuevo
                       setIsNewInstrument(true);
-                      // Limpiamos selecciones previas por si acaso
                       setFormData(prev => ({ ...prev, existingCustomerId: "", existingInstrumentId: "" }));
                     }
                   }}
@@ -337,7 +333,6 @@ export default function OrdenesPage() {
                   type="button" 
                   variant="outline" 
                   size="sm" 
-                  // Bloqueamos el botón si es cliente nuevo O si no ha seleccionado a nadie
                   disabled={isNewCustomer || (!isNewCustomer && !formData.existingCustomerId)} 
                   onClick={() => setIsNewInstrument(!isNewInstrument)}
                 >
@@ -388,11 +383,13 @@ export default function OrdenesPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="space-y-2">
                   <Label>Servicio a Realizar</Label>
+                  {/* AQUÍ ESTÁN LOS 4 PAQUETES NUEVOS INTEGRADOS */}
                   <select className={selectClasses} value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value})}>
-                    <option value="Pa'l Huesero">Pa'l Huesero (Calibración)</option>
+                    <option value="Pa'l Apuro">Pa'l Apuro (Ajuste Básico)</option>
+                    <option value="Pa'l Huesero">Pa'l Huesero (Mantenimiento Estándar)</option>
                     <option value="Pa'l Rockstar">Pa'l Rockstar (Servicio Completo)</option>
-                    <option value="Electrónica / Reparación">Reparación de Electrónica</option>
-                    <option value="Nivelación / Rectificado">Nivelación de Trastes</option>
+                    <option value="Pa' La Leyenda">Pa' La Leyenda (Ultimate + Nivelado)</option>
+                    <option value="Electrónica / Reparación">Reparación / Electrónica (Específico)</option>
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
