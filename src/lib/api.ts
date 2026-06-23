@@ -34,7 +34,7 @@ export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) 
   headers.append('Content-Type', 'application/json');
   headers.append('X-Tenant-ID', 'emelius_gw'); // Nuestro inquilino actual
 
-  // Si tenemos un token guardado, lo inyectamos en la cabecera Authorization
+  // Si tenemos un token guardado, lo inyectamos
   const token = getToken();
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
@@ -45,8 +45,21 @@ export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) 
     headers,
   });
 
+  // --- AQUÍ ESTÁ LA MAGIA DEL INTERCEPTOR ---
   if (!response.ok) {
-    // Extraemos el mensaje de error del backend si existe
+    // Si el token expiró o el backend se reinició (401 o 403)
+    if (response.status === 401 || response.status === 403) {
+      removeToken(); // Destruimos localStorage y la cookie
+      
+      // Redirigimos al login solo si estamos en el cliente (navegador)
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?expired=true';
+      }
+      
+      throw new Error("Sesión expirada. Por favor, inicia sesión de nuevo.");
+    }
+
+    // Manejo de otros errores (400, 404, 500...)
     let errorMessage = `Error en la API: ${response.status}`;
     try {
       const errorData = await response.json();
@@ -57,7 +70,7 @@ export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) 
     throw new Error(errorMessage);
   }
 
-  // Si la respuesta es un texto simple (como en tu registro), no intentamos parsear JSON
+  // Parseo de respuesta exitosa
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.indexOf("application/json") !== -1) {
     return response.json();
