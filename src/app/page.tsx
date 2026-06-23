@@ -40,7 +40,7 @@ export default function LandingPage() {
     let url = `https://calendly.com/emediusgw/${eventType}`;
     
     if (prefillMessage) {
-      url += `?a1=${encodeURIComponent(prefillMessage)}`;
+      url += `?a2=${encodeURIComponent(prefillMessage)}`;
     }
     
     setCalendlyUrl(url);
