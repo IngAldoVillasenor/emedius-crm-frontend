@@ -1,6 +1,10 @@
 // src/lib/api.ts
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/api' || 'http://localhost:8080/api';
+// 1. Primero decidimos el dominio base (Render o Localhost)
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+// 2. Luego le agregamos el sufijo /api
+const API_BASE_URL = `${baseURL}/api`;
 
 // Utilidades para manejar el Token en el navegador (Local Storage)
 export const setToken = (token: string) => {

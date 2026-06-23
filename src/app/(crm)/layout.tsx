@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import SidebarNav from "@/components/SidebarNav";
+import MobileNav from "@/components/MobileNav";
 
 export default function CRMLayout({
   children,
@@ -56,7 +57,8 @@ export default function CRMLayout({
       {/* Contenido Principal (Lo que cambia) */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header Superior Móvil / Perfil */}
-        <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6">
+        <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6">
+          <MobileNav />
           <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
             Panel de Control
           </h2>

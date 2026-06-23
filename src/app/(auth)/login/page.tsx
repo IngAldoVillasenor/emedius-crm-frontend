@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-20 h-20 overflow-hidden rounded-full border-2 border-amber-500/30 shadow-lg mb-4 bg-white">
-            <Image src="/logo.jpg" alt="Emedius Workshop" fill className="object-cover" />
+            <Image src="/logo.jpg" alt="Emedius Workshop" fill className="object-cover" sizes="80px" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Bienvenido de nuevo
