@@ -22,7 +22,17 @@ export default function LandingPage() {
     "/portfolio/9.jpg", "/portfolio/10.jpg", "/portfolio/11.jpg", "/portfolio/12.jpg",
   ];
 
-  const randomImages = [...allPortfolioImages].sort(() => 0.5 - Math.random()).slice(0, 4);
+  const [carouselImages, setCarouselImages] = useState<string[]>([
+    "/portfolio/1.jpg", "/portfolio/2.jpg", "/portfolio/3.jpg", "/portfolio/4.jpg"
+  ]);
+
+  // 2. Mezclamos las imágenes SOLO cuando el componente ya cargó en el navegador
+  useEffect(() => {
+    const shuffled = [...allPortfolioImages]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 4);
+    setCarouselImages(shuffled);
+  }, []);
   const educationalImage = "/portfolio/educational.jpg";
 
   // --- ESTADOS PARA CALENDLY ---
@@ -134,7 +144,7 @@ export default function LandingPage() {
           
           <Carousel className="w-full max-w-4xl mx-auto">
             <CarouselContent>
-              {randomImages.map((imagePath, index) => (
+              {carouselImages.map((imagePath, index) => (
                 <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     <Card className="overflow-hidden border-0 shadow-sm">
