@@ -2,17 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ClipboardList, Plus, Loader2, Clock, CheckCircle2, Wrench, Search, Archive } from "lucide-react";
+import { 
+  ClipboardList, Plus, Loader2, Clock, CheckCircle2, 
+  Wrench, Search, Archive, User, Guitar, Activity, X, Save 
+} from "lucide-react";
 import { fetchFromAPI } from "@/lib/api";
 import OrderDetailModal from "@/components/OrderDetailModal";
+
+interface Customer {
+  id: string;
+  name: string;
+}
 
 interface Instrument {
   id: string;
   brand: string;
   model: string;
+  customerId?: string;
   customerName?: string;
 }
 
@@ -27,36 +36,54 @@ interface ServiceOrder {
   entryDate?: any;
 }
 
+const INITIAL_FORM_DATA = {
+  existingCustomerId: "",
+  newCustomerName: "",
+  newCustomerPhone: "",
+  newCustomerEmail: "",
+
+  existingInstrumentId: "",
+  newInstrumentBrand: "",
+  newInstrumentModel: "",
+  newInstrumentType: "Guitarra Eléctrica",
+
+  serviceType: "Pa'l Huesero",
+  initialNotes: "",
+
+  stringGauge: "",
+  action1stFret: "",
+  action12thFret: "",
+  paintCondition: "",
+  fretboardStatus: "",
+  hardwareStatus: ""
+};
+
 export default function OrdenesPage() {
+  // --- ESTADOS DE LA VISTA PRINCIPAL ---
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [allInstruments, setAllInstruments] = useState<Instrument[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDelivered, setShowDelivered] = useState(false);
-
-  // Estados del formulario principal
-  const [instrumentId, setInstrumentId] = useState("");
-  const [serviceType, setServiceType] = useState("Pa'l Huesero");
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState("RECIBIDO");
-  
-  // Estados para IntakeConditionDTO
-  const [stringGauge, setStringGauge] = useState("");
-  const [action1stFret, setAction1stFret] = useState("");
-  const [action12thFret, setAction12thFret] = useState("");
-  const [paintCondition, setPaintCondition] = useState("");
-  const [fretboardStatus, setFretboardStatus] = useState("");
-  const [hardwareStatus, setHardwareStatus] = useState("");
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  
+  // --- ESTADOS DEL FORMULARIO UNIFICADO ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [isNewInstrument, setIsNewInstrument] = useState(false);
+  const [filteredInstruments, setFilteredInstruments] = useState<Instrument[]>([]);
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
-  // Estados para el Modal de Detalle
+  // --- ESTADOS DEL MODAL ---
   const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Utilidades
+  const selectClasses = "flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300";
 
   const formatOrderDate = (dateVal: any) => {
     if (!dateVal) return "Sin fecha";
@@ -69,12 +96,14 @@ export default function OrdenesPage() {
     return `${day}/${month}/${parsedDate.getFullYear()}`;
   };
 
+  // Carga inicial de todos los datos
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [ordersData, instrumentsData] = await Promise.all([
+      const [ordersData, instrumentsData, customersData] = await Promise.all([
         fetchFromAPI("/service-orders").catch(() => []), 
-        fetchFromAPI("/instruments").catch(() => [])
+        fetchFromAPI("/instruments").catch(() => []),
+        fetchFromAPI("/customers").catch(() => [])
       ]);
       
       const sortedOrders = ordersData.sort((a: any, b: any) => {
@@ -84,11 +113,8 @@ export default function OrdenesPage() {
       });
 
       setOrders(sortedOrders);
-      setInstruments(instrumentsData);
-      
-      if (instrumentsData.length > 0 && !instrumentId) {
-        setInstrumentId(instrumentsData[0].id);
-      }
+      setAllInstruments(instrumentsData);
+      setCustomers(customersData);
     } catch (err: any) {
       setError("No se pudieron cargar los datos.");
     } finally {
@@ -99,6 +125,20 @@ export default function OrdenesPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Filtrado reactivo de instrumentos basado en el cliente seleccionado
+  useEffect(() => {
+    if (formData.existingCustomerId) {
+      const filtered = allInstruments.filter(
+        (inst) => inst.customerId === formData.existingCustomerId
+      );
+      setFilteredInstruments(filtered);
+      // Limpiar selección de instrumento si ya no hace match
+      setFormData(prev => ({ ...prev, existingInstrumentId: "" }));
+    } else {
+      setFilteredInstruments([]);
+    }
+  }, [formData.existingCustomerId, allInstruments]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -121,38 +161,48 @@ export default function OrdenesPage() {
     setIsModalOpen(true);
   };
 
-  const handleCreateOrder = async (e: React.FormEvent) => {
+  const handleCreateUnifiedOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!instrumentId) {
-      setError("Debes seleccionar un instrumento.");
-      return;
-    }
     setIsSubmitting(true);
     setError("");
 
+    // Limpieza de campos para enviar JSON óptimo
+    const finalPayload = { ...formData };
+    if (isNewCustomer) {
+      finalPayload.existingCustomerId = "";
+    } else {
+      finalPayload.newCustomerName = "";
+      finalPayload.newCustomerPhone = "";
+      finalPayload.newCustomerEmail = "";
+    }
+
+    if (isNewInstrument) {
+      finalPayload.existingInstrumentId = "";
+    } else {
+      finalPayload.newInstrumentBrand = "";
+      finalPayload.newInstrumentModel = "";
+      finalPayload.newInstrumentType = "";
+    }
+
     try {
-      await fetchFromAPI("/service-orders", {
+      await fetchFromAPI("/service-orders/unified", {
         method: "POST",
-        body: JSON.stringify({ 
-          instrumentId, serviceType, notes, status,
-          intakeCondition: { stringGauge, action1stFret, action12thFret, paintCondition, fretboardStatus, hardwareStatus }
-        }),
+        body: JSON.stringify(finalPayload),
       });
 
-      setNotes(""); setServiceType("Pa'l Huesero"); setStatus("RECIBIDO");
-      setStringGauge(""); setAction1stFret(""); setAction12thFret("");
-      setPaintCondition(""); setFretboardStatus(""); setHardwareStatus("");
-      
+      // Limpiar formulario y recargar datos
+      setFormData(INITIAL_FORM_DATA);
+      setIsNewCustomer(false);
+      setIsNewInstrument(false);
       setShowForm(false);
-      loadData(); 
+      await loadData();
     } catch (err: any) {
-      setError(err.message || "Error al crear la orden.");
+      setError(err.message || "Error al crear la orden unificada.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const selectClasses = "flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300";
 
   const getStatusDisplay = (status: string) => {
     switch (status.toUpperCase()) {
@@ -165,19 +215,12 @@ export default function OrdenesPage() {
   };
 
   const filteredOrders = orders.filter((order) => {
-    if (!showDelivered && order.status.toUpperCase() === "ENTREGADO") {
-      return false;
-    }
-
+    if (!showDelivered && order.status.toUpperCase() === "ENTREGADO") return false;
     const term = searchTerm.toLowerCase();
-    const orderId = order.id.split('-')[0].toLowerCase();
-    const instrumentInfo = `${order.instrumentBrand} ${order.instrumentModel}`.toLowerCase();
-    const customerInfo = (order.customerName || "").toLowerCase();
-
     return (
-      orderId.includes(term) ||
-      instrumentInfo.includes(term) ||
-      customerInfo.includes(term)
+      order.id.split('-')[0].toLowerCase().includes(term) ||
+      `${order.instrumentBrand} ${order.instrumentModel}`.toLowerCase().includes(term) ||
+      (order.customerName || "").toLowerCase().includes(term)
     );
   });
 
@@ -215,78 +258,172 @@ export default function OrdenesPage() {
           </Button>
 
           <Button onClick={() => setShowForm(!showForm)} className="bg-amber-600 hover:bg-amber-700 text-white gap-2 w-full sm:w-auto">
-            <Plus className="w-4 h-4" />
-            {showForm ? "Cancelar" : "Nueva Orden"}
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {showForm ? "Cancelar Registro" : "Nueva Orden"}
           </Button>
         </div>
       </div>
 
       {error && <div className="p-4 bg-red-100 border border-red-200 text-red-600 rounded-lg text-sm">{error}</div>}
 
-      {/* Formulario de Creación (Limpiado y corregido) */}
+      {/* FORMULARIO UNIFICADO DE CREACIÓN */}
       {showForm && (
-        <Card className="border-amber-500/30 shadow-md max-w-3xl animate-in fade-in slide-in-from-top-4 duration-200">
-          <CardHeader>
-            <CardTitle className="text-lg">Generar Orden de Trabajo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateOrder} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="instrument">Instrumento a Reparar</Label>
-                  <select id="instrument" value={instrumentId} onChange={(e) => setInstrumentId(e.target.value)} className={selectClasses} required>
-                    <option value="" disabled>Selecciona un instrumento...</option>
-                    {instruments.map(inst => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.brand} {inst.model} {inst.customerName ? `(Dueño: ${inst.customerName})` : ''}
-                      </option>
-                    ))}
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300 bg-white dark:bg-zinc-950 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Alta de Servicio Expreso</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Registra cliente, instrumento e historial en una sola transacción.</p>
+          </div>
+
+          <form onSubmit={handleCreateUnifiedOrder} className="space-y-8">
+            
+            {/* BLOQUE 1: CLIENTE */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                  <User className="w-5 h-5 text-amber-500" /> Datos del Cliente
+                </h3>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const isNowNew = !isNewCustomer;
+                    setIsNewCustomer(isNowNew);
+                    if (isNowNew) {
+                      // Si es cliente nuevo, forzamos que el instrumento sea nuevo
+                      setIsNewInstrument(true);
+                      // Limpiamos selecciones previas por si acaso
+                      setFormData(prev => ({ ...prev, existingCustomerId: "", existingInstrumentId: "" }));
+                    }
+                  }}
+                >
+                  {isNewCustomer ? "Seleccionar Existente" : "Registrar Nuevo"}
+                </Button>
+              </div>
+              
+              {isNewCustomer ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nombre Completo</Label>
+                    <Input value={formData.newCustomerName} onChange={e => setFormData({...formData, newCustomerName: e.target.value})} placeholder="Ej. Juan Pérez" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Teléfono WhatsApp</Label>
+                    <Input value={formData.newCustomerPhone} onChange={e => setFormData({...formData, newCustomerPhone: e.target.value})} placeholder="Ej. 4771234567" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Correo Electrónico (Opcional)</Label>
+                    <Input type="email" value={formData.newCustomerEmail} onChange={e => setFormData({...formData, newCustomerEmail: e.target.value})} placeholder="juan@correo.com" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 max-w-md">
+                  <Label>Buscar Cliente Registrado</Label>
+                  <select className={selectClasses} value={formData.existingCustomerId} onChange={e => setFormData({...formData, existingCustomerId: e.target.value})} required>
+                    <option value="" disabled>Selecciona un cliente de la lista...</option>
+                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
+              )}
+            </div>
 
-                <div className="grid grid-cols-1 gap-4">
+            {/* BLOQUE 2: INSTRUMENTO */}
+            <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                  <Guitar className="w-5 h-5 text-amber-500" /> Especificaciones del Instrumento
+                </h3>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  // Bloqueamos el botón si es cliente nuevo O si no ha seleccionado a nadie
+                  disabled={isNewCustomer || (!isNewCustomer && !formData.existingCustomerId)} 
+                  onClick={() => setIsNewInstrument(!isNewInstrument)}
+                >
+                  {isNewInstrument ? "Seleccionar Existente" : "Registrar Nuevo"}
+                </Button>
+              </div>
+
+              {!isNewCustomer && !formData.existingCustomerId ? (
+                <p className="text-sm text-zinc-400 italic">Por favor, selecciona o crea un cliente primero.</p>
+              ) : isNewInstrument ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="serviceType">Paquete de Servicio</Label>
-                    <select 
-                      id="serviceType" 
-                      value={serviceType} 
-                      onChange={(e) => setServiceType(e.target.value)} 
-                      className={selectClasses}
-                    >
-                      <option value="Pa'l Huesero">Pa'l Huesero</option>
-                      <option value="Pa'l Rockstar">Pa'l Rockstar (Full Service)</option>
-                      <option value="Ajuste Personalizado">Ajuste Personalizado</option>
-                      <option value="Solo Electrónica">Solo Electrónica</option>
+                    <Label>Marca</Label>
+                    <Input value={formData.newInstrumentBrand} onChange={e => setFormData({...formData, newInstrumentBrand: e.target.value})} placeholder="Ej. Fender" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Modelo</Label>
+                    <Input value={formData.newInstrumentModel} onChange={e => setFormData({...formData, newInstrumentModel: e.target.value})} placeholder="Ej. Stratocaster" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo</Label>
+                    <select className={selectClasses} value={formData.newInstrumentType} onChange={e => setFormData({...formData, newInstrumentType: e.target.value})}>
+                      <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
+                      <option value="Guitarra Acústica">Guitarra Acústica</option>
+                      <option value="Bajo Eléctrico">Bajo Eléctrico</option>
+                      <option value="Otros">Otros</option>
                     </select>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <Label className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Condiciones de Ingreso al Taller</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2"><Label htmlFor="stringGauge" className="text-xs">Calibre de Cuerdas</Label><Input id="stringGauge" value={stringGauge} onChange={(e) => setStringGauge(e.target.value)} placeholder="Ej. 10-46" required /></div>
-                  <div className="space-y-2"><Label htmlFor="action1stFret" className="text-xs">Acción 1er Traste</Label><Input id="action1stFret" value={action1stFret} onChange={(e) => setAction1stFret(e.target.value)} placeholder="Ej. 0.5mm" required /></div>
-                  <div className="space-y-2"><Label htmlFor="action12thFret" className="text-xs">Acción 12vo Traste</Label><Input id="action12thFret" value={action12thFret} onChange={(e) => setAction12thFret(e.target.value)} placeholder="Ej. 1.5mm" required /></div>
+              ) : (
+                <div className="space-y-2 max-w-md">
+                  <Label>Instrumentos asociados al cliente</Label>
+                  <select className={selectClasses} value={formData.existingInstrumentId} onChange={e => setFormData({...formData, existingInstrumentId: e.target.value})} required>
+                    <option value="" disabled>Selecciona un instrumento...</option>
+                    {filteredInstruments.map(i => <option key={i.id} value={i.id}>{i.brand} - {i.model}</option>)}
+                    {filteredInstruments.length === 0 && <option value="" disabled>No tiene instrumentos. Usa el botón de registrar nuevo.</option>}
+                  </select>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2"><Label htmlFor="paintCondition" className="text-xs">Estado Pintura</Label><Input id="paintCondition" value={paintCondition} onChange={(e) => setPaintCondition(e.target.value)} placeholder="Ej. Raspones" required /></div>
-                  <div className="space-y-2"><Label htmlFor="fretboardStatus" className="text-xs">Estado Diapasón</Label><Input id="fretboardStatus" value={fretboardStatus} onChange={(e) => setFretboardStatus(e.target.value)} placeholder="Ej. Reseco" required /></div>
-                  <div className="space-y-2"><Label htmlFor="hardwareStatus" className="text-xs">Estado Hardware</Label><Input id="hardwareStatus" value={hardwareStatus} onChange={(e) => setHardwareStatus(e.target.value)} placeholder="Ej. Óxido" required /></div>
+              )}
+            </div>
+
+            {/* BLOQUE 3: DETALLES Y CONDICIONES */}
+            <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                <Activity className="w-5 h-5 text-amber-500" /> Detalles del Trabajo y Recepción
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="space-y-2">
+                  <Label>Servicio a Realizar</Label>
+                  <select className={selectClasses} value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value})}>
+                    <option value="Pa'l Huesero">Pa'l Huesero (Calibración)</option>
+                    <option value="Pa'l Rockstar">Pa'l Rockstar (Servicio Completo)</option>
+                    <option value="Electrónica / Reparación">Reparación de Electrónica</option>
+                    <option value="Nivelación / Rectificado">Nivelación de Trastes</option>
+                  </select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Instrucciones o Síntomas Iniciales</Label>
+                  <Input value={formData.initialNotes} onChange={e => setFormData({...formData, initialNotes: e.target.value})} placeholder="Ej. Afinar en Drop D, potenciómetro de volumen hace ruido" />
                 </div>
               </div>
 
-              <div className="space-y-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <Label htmlFor="notes">Instrucciones Especiales</Label>
-                <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej. Afinar en Drop D" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                <div className="space-y-2"><Label className="text-xs">Calibre de Cuerdas</Label><Input value={formData.stringGauge} onChange={e => setFormData({...formData, stringGauge: e.target.value})} placeholder="Ej. 10-46" /></div>
+                <div className="space-y-2"><Label className="text-xs">Acción 1er Traste</Label><Input value={formData.action1stFret} onChange={e => setFormData({...formData, action1stFret: e.target.value})} placeholder="Ej. 0.5mm" /></div>
+                <div className="space-y-2"><Label className="text-xs">Acción 12vo Traste</Label><Input value={formData.action12thFret} onChange={e => setFormData({...formData, action12thFret: e.target.value})} placeholder="Ej. 1.5mm" /></div>
+                
+                <div className="space-y-2"><Label className="text-xs">Estado Pintura</Label><Input value={formData.paintCondition} onChange={e => setFormData({...formData, paintCondition: e.target.value})} placeholder="Ej. Raspones traseros" /></div>
+                <div className="space-y-2"><Label className="text-xs">Estado Diapasón</Label><Input value={formData.fretboardStatus} onChange={e => setFormData({...formData, fretboardStatus: e.target.value})} placeholder="Ej. Reseco" /></div>
+                <div className="space-y-2"><Label className="text-xs">Estado Hardware</Label><Input value={formData.hardwareStatus} onChange={e => setFormData({...formData, hardwareStatus: e.target.value})} placeholder="Ej. Óxido leve" /></div>
               </div>
+            </div>
 
-              <Button type="submit" disabled={isSubmitting || instruments.length === 0} className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-4">
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Orden de Servicio"}
+            {/* BOTONES DE ENVÍO */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={isSubmitting}>
+                Cancelar
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Registrar Orden Completa
+              </Button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* Grid de Renderizado de Tarjetas */}
@@ -352,7 +489,7 @@ export default function OrdenesPage() {
                       {updatingId === order.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />}
                       <select 
                         value={order.status}
-                        onClick={(e) => e.stopPropagation()} // Detiene la propagación del clic hacia la tarjeta
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         disabled={updatingId === order.id}
                         className="text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1 cursor-pointer hover:bg-zinc-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium text-zinc-700 disabled:opacity-50"
@@ -371,7 +508,7 @@ export default function OrdenesPage() {
         </div>
       )}
 
-      {/* Modal maestro inyectado de forma segura en la raíz del componente */}
+      {/* Modal maestro */}
       <OrderDetailModal 
         order={selectedOrder} 
         isOpen={isModalOpen} 
