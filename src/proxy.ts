@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   // 1. Buscamos la cookie que acabamos de configurar en api.ts
   const token = request.cookies.get('crm_token')?.value;
   const { pathname } = request.nextUrl;

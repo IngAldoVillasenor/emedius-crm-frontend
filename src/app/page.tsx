@@ -73,7 +73,7 @@ export default function LandingPage() {
       <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto relative z-20">
         <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-amber-600 dark:text-amber-500">
           <div className="relative w-10 h-10 overflow-hidden rounded-full border border-amber-600/30 shadow-sm bg-white dark:bg-zinc-900">
-            <Image src="/logo.jpg" alt="Emedius Workshop Logo" fill className="object-cover" />
+            <Image src="/logo.jpg" alt="Emedius Workshop Logo" fill className="object-cover" sizes="100%" />
           </div>
           <span>Emedius Workshop</span>
         </div>

@@ -1,10 +1,26 @@
+"use client";
+
 import { MessageCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function WhatsAppButton() {
   // El número de Emedius y un mensaje prellenado amigable
   const phoneNumber = "524775948211"; // Reemplázalo con el código de país + número
   const message = "¡Hola! Vengo de la página web, me gustaría cotizar un mantenimiento para mi instrumento.";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+  const pathname = usePathname();
+
+  // 1. Define las rutas principales de tu CRM donde NO quieres el botón
+  const crmRoutes = ["/login", "/ordenes", "/instrumentos", "/clientes", "/dashboard"];
+
+  // 2. Verifica si la URL actual empieza con alguna de esas rutas de administrador
+  const isCrmRoute = crmRoutes.some((route) => pathname.startsWith(route));
+
+  // 3. Si está en el CRM, devolvemos 'null' para que el botón no se dibuje
+  if (isCrmRoute) {
+    return null;
+  }
 
   return (
     <a
