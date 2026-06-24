@@ -2,7 +2,7 @@ import { MessageCircle } from "lucide-react";
 
 export default function WhatsAppButton() {
   // El número de Emedius y un mensaje prellenado amigable
-  const phoneNumber = "524775615105"; // Reemplázalo con el código de país + número
+  const phoneNumber = "524775948211"; // Reemplázalo con el código de país + número
   const message = "¡Hola! Vengo de la página web, me gustaría cotizar un mantenimiento para mi instrumento.";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
