@@ -10,10 +10,16 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-import { ArrowRight, Droplet, Guitar, ShieldCheck, Wrench, Activity, CheckCircle2, Check, Award, AlertTriangle, Plus } from "lucide-react";
+import { 
+  ArrowRight, Droplet, Guitar, ShieldCheck, Wrench, Activity, 
+  CheckCircle2, Check, Award, AlertTriangle, Plus,
+  MapPin, Clock
+} from "lucide-react"; // <-- NUEVO: Agregamos iconos de redes sociales
 import Link from "next/link";
 import Image from "next/image";
 import { PopupModal } from "react-calendly";
+
+import { FaWhatsapp, FaFacebook, FaInstagram, FaYoutube, FaTiktok } from "react-icons/fa6";
 
 export default function LandingPage() {
   const allPortfolioImages = [
@@ -26,7 +32,7 @@ export default function LandingPage() {
     "/portfolio/1.jpg", "/portfolio/2.jpg", "/portfolio/3.jpg", "/portfolio/4.jpg"
   ]);
 
-  // 2. Mezclamos las imágenes SOLO cuando el componente ya cargó en el navegador
+  // Mezclamos las imágenes SOLO cuando el componente ya cargó en el navegador
   useEffect(() => {
     const shuffled = [...allPortfolioImages]
       .sort(() => 0.5 - Math.random())
@@ -162,7 +168,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección de Paquetes de Servicio (ACTUALIZADA) */}
+      {/* Sección de Paquetes de Servicio */}
       <section className="py-24 bg-zinc-50 dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -170,7 +176,6 @@ export default function LandingPage() {
             <p className="text-lg text-zinc-600 dark:text-zinc-400">Selecciona el nivel de cuidado que tu instrumento necesita.</p>
           </div>
 
-          {/* Cuadrícula de 4 columnas en pantallas grandes */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
             
             {/* Paquete 1: Pa'l Apuro */}
@@ -314,7 +319,122 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Sección de Ubicación y Horarios */}
+      <section className="py-24 bg-white dark:bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            
+            {/* Información de Contacto */}
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight mb-6">Visita el Taller</h2>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+                Trabajamos bajo un esquema de citas programadas para garantizar que cada instrumento que ingresa reciba la atención, el tiempo y el respeto que merece.
+              </p>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-full shrink-0">
+                    <MapPin className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Ubicación</h4>
+                    <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+                      Emedius' Guitar Workshop<br/>
+                      <span className="text-sm italic">Blvd. Hermenegildo Bustos 1426, La Hacienda, 37178 León de los Aldama, Gto.</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-full shrink-0">
+                    <Clock className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Horarios de Atención</h4>
+                    <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+                      Lunes a Viernes: 10:00 AM - 7:00 PM<br/>
+                      Sábados: 10:00 AM - 2:00 PM<br/>
+                      Domingos: Cerrado
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* El Mapa de Google (iframe) */}
+            <div className="w-full h-[400px] md:h-[450px] rounded-2xl overflow-hidden shadow-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900">
+              <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14883.938522723161!2d-101.71332322137829!3d21.153009922200326!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x842bb9eb48b76f03%3A0xac1f5df84dac6673!2sEmedius&#39;%20Guitar%20Workshop!5e0!3m2!1ses!2smx!4v1782325635803!5m2!1ses!2smx" 
+              width="100%" 
+              height="100%" 
+              style={{ border:0 }} 
+              allowFullScreen={true} 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+              className="grayscale-[20%] contrast-125 opacity-90 dark:invert dark:hue-rotate-180 transition-all hover:grayscale-0 hover:opacity-100">
+
+              </iframe>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* NUEVO: SECCIÓN DE REDES SOCIALES Y CONTACTO */}
+      <section className="py-16 bg-zinc-100 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold tracking-tight mb-4">Conecta con el Taller</h2>
+          <p className="text-zinc-600 dark:text-zinc-400 mb-8 max-w-2xl mx-auto">
+            Síguenos en nuestras redes sociales para ver el "detrás de escena" de nuestros trabajos más recientes o envíanos un mensaje directo para resolver tus dudas.
+          </p>
+          
+          <div className="flex flex-wrap justify-center gap-4">
+            {/* Botón WhatsApp */}
+            <a href="https://wa.me/524775948211" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2 border-zinc-300 dark:border-zinc-700 hover:text-[#25D366] hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors">
+                <FaWhatsapp className="w-5 h-5" /> WhatsApp
+              </Button>
+            </a>
+
+            {/* Botón Facebook */}
+            <a href="https://www.facebook.com/EmediusGuitarWorkshop" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2 border-zinc-300 dark:border-zinc-700 hover:text-[#1877F2] hover:border-[#1877F2] hover:bg-[#1877F2]/10 transition-colors">
+                <FaFacebook className="w-5 h-5" /> Facebook
+              </Button>
+            </a>
+
+            {/* Botón Instagram */}
+            <a href="https://www.instagram.com/emediusguitarworkshop/" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2 border-zinc-300 dark:border-zinc-700 hover:text-[#E4405F] hover:border-[#E4405F] hover:bg-[#E4405F]/10 transition-colors">
+                <FaInstagram className="w-5 h-5" /> Instagram
+              </Button>
+            </a>
+
+            {/* Botones futuros preparados (Descomentar cuando estén listos) */}
+            
+            {/*
+            <a href="https://youtube.com/tu-canal" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2 border-zinc-300 dark:border-zinc-700 hover:text-[#FF0000] hover:border-[#FF0000] hover:bg-[#FF0000]/10 transition-colors">
+                <FaYoutube className="w-5 h-5" /> YouTube
+              </Button>
+            </a>
+            */}
+
+            {/*
+            <a href="https://tiktok.com/@tu-perfil" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2 border-zinc-300 dark:border-zinc-700 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                <FaTiktok className="w-5 h-5" /> TikTok
+              </Button>
+            </a>
+            */}
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-8 text-center text-zinc-500 text-sm bg-zinc-50 dark:bg-zinc-950">
+        <p className="font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+          Luthier en León, Guanajuato, México.
+        </p>
         <p>© {new Date().getFullYear()} Emedius Guitar Workshop. Todos los derechos reservados.</p>
       </footer>
     </div>
