@@ -33,7 +33,7 @@ export default function LandingPage() {
       .slice(0, 4);
     setCarouselImages(shuffled);
   }, []);
-  const educationalImage = "/portfolio/educational.jpg";
+  const educationalImage = "/educational.jpg";
 
   // --- ESTADOS PARA CALENDLY ---
   const [isCalendlyOpen, setIsCalendlyOpen] = useState(false);
