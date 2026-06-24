@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { Analytics } from '@vercel/analytics/next';
 
 // Importamos y configuramos la tipografía
 const montserrat = Montserrat({ 
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className={montserrat.className}>
         {children}
         <WhatsAppButton />
+        <Analytics />
       </body>
     </html>
   );
