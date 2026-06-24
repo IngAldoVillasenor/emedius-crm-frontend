@@ -21,6 +21,7 @@ interface Instrument {
   id: string;
   brand: string;
   model: string;
+  serialNumber?: string;
   customerId?: string;
   customerName?: string;
 }
@@ -45,9 +46,9 @@ const INITIAL_FORM_DATA = {
   existingInstrumentId: "",
   newInstrumentBrand: "",
   newInstrumentModel: "",
+  newInstrumentSerialNumber: "", // <-- NUEVO: Número de serie
   newInstrumentType: "Guitarra Eléctrica",
 
-  // Dejamos Pa'l Huesero como el valor por defecto por ser el estándar
   serviceType: "Pa'l Huesero",
   initialNotes: "",
 
@@ -76,6 +77,7 @@ export default function OrdenesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [isNewInstrument, setIsNewInstrument] = useState(false);
+  const [showNewCustomType, setShowNewCustomType] = useState(false); // <-- NUEVO: Estado para "Otros"
   const [filteredInstruments, setFilteredInstruments] = useState<Instrument[]>([]);
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
@@ -97,7 +99,6 @@ export default function OrdenesPage() {
     return `${day}/${month}/${parsedDate.getFullYear()}`;
   };
 
-  // Carga inicial de todos los datos
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -127,7 +128,6 @@ export default function OrdenesPage() {
     loadData();
   }, []);
 
-  // Filtrado reactivo de instrumentos basado en el cliente seleccionado
   useEffect(() => {
     if (formData.existingCustomerId) {
       const filtered = allInstruments.filter(
@@ -167,6 +167,8 @@ export default function OrdenesPage() {
     setError("");
 
     const finalPayload = { ...formData };
+    
+    // Limpieza de payload según la selección
     if (isNewCustomer) {
       finalPayload.existingCustomerId = "";
     } else {
@@ -181,6 +183,7 @@ export default function OrdenesPage() {
       finalPayload.newInstrumentBrand = "";
       finalPayload.newInstrumentModel = "";
       finalPayload.newInstrumentType = "";
+      finalPayload.newInstrumentSerialNumber = ""; // <-- Limpiamos número de serie también
     }
 
     try {
@@ -189,9 +192,11 @@ export default function OrdenesPage() {
         body: JSON.stringify(finalPayload),
       });
 
+      // Resetear estados
       setFormData(INITIAL_FORM_DATA);
       setIsNewCustomer(false);
       setIsNewInstrument(false);
+      setShowNewCustomType(false);
       setShowForm(false);
       await loadData();
     } catch (err: any) {
@@ -343,7 +348,7 @@ export default function OrdenesPage() {
               {!isNewCustomer && !formData.existingCustomerId ? (
                 <p className="text-sm text-zinc-400 italic">Por favor, selecciona o crea un cliente primero.</p>
               ) : isNewInstrument ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Marca</Label>
                     <Input value={formData.newInstrumentBrand} onChange={e => setFormData({...formData, newInstrumentBrand: e.target.value})} placeholder="Ej. Fender" required />
@@ -352,14 +357,46 @@ export default function OrdenesPage() {
                     <Label>Modelo</Label>
                     <Input value={formData.newInstrumentModel} onChange={e => setFormData({...formData, newInstrumentModel: e.target.value})} placeholder="Ej. Stratocaster" required />
                   </div>
+                  
+                  {/* NUEVO: NÚMERO DE SERIE */}
                   <div className="space-y-2">
-                    <Label>Tipo</Label>
-                    <select className={selectClasses} value={formData.newInstrumentType} onChange={e => setFormData({...formData, newInstrumentType: e.target.value})}>
+                    <Label>Número de Serie (Opcional)</Label>
+                    <Input value={formData.newInstrumentSerialNumber} onChange={e => setFormData({...formData, newInstrumentSerialNumber: e.target.value})} placeholder="Ej. US19283746" />
+                  </div>
+
+                  {/* NUEVO: LÓGICA DE CATEGORÍA CON "OTROS" */}
+                  <div className="space-y-2">
+                    <Label>Tipo / Categoría</Label>
+                    <select
+                      className={selectClasses}
+                      value={showNewCustomType ? "Otros" : formData.newInstrumentType}
+                      onChange={(e) => {
+                        if (e.target.value === "Otros") {
+                          setShowNewCustomType(true);
+                          setFormData({ ...formData, newInstrumentType: "" }); 
+                        } else {
+                          setShowNewCustomType(false);
+                          setFormData({ ...formData, newInstrumentType: e.target.value });
+                        }
+                      }}
+                    >
                       <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
                       <option value="Guitarra Acústica">Guitarra Acústica</option>
                       <option value="Bajo Eléctrico">Bajo Eléctrico</option>
-                      <option value="Otros">Otros</option>
+                      <option value="Otros">Otros (Especificar)...</option>
                     </select>
+
+                    {showNewCustomType && (
+                      <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                        <Input
+                          value={formData.newInstrumentType}
+                          onChange={(e) => setFormData({...formData, newInstrumentType: e.target.value})}
+                          placeholder="Ej. Ukulele, Cello, Amplificador..."
+                          required={showNewCustomType}
+                          autoFocus
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -383,7 +420,6 @@ export default function OrdenesPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="space-y-2">
                   <Label>Servicio a Realizar</Label>
-                  {/* AQUÍ ESTÁN LOS 4 PAQUETES NUEVOS INTEGRADOS */}
                   <select className={selectClasses} value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value})}>
                     <option value="Pa'l Apuro">Pa'l Apuro (Ajuste Básico)</option>
                     <option value="Pa'l Huesero">Pa'l Huesero (Mantenimiento Estándar)</option>

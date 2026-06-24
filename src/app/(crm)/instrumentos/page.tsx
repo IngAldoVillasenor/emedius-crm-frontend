@@ -15,6 +15,7 @@ interface Instrument {
   brand: string;
   model: string;
   type?: string; 
+  serialNumber?: string; // <-- NUEVO: Número de serie
   customerName?: string;
 }
 
@@ -27,7 +28,6 @@ interface ServiceOrder {
   customerName?: string;
 }
 
-// NUEVO: Necesitamos a los clientes para el dropdown
 interface Customer {
   id: string;
   name: string;
@@ -36,7 +36,7 @@ interface Customer {
 export default function InstrumentosPage() {
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]); // NUEVO
+  const [customers, setCustomers] = useState<Customer[]>([]); 
   
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,16 +51,17 @@ export default function InstrumentosPage() {
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewCustomType, setShowNewCustomType] = useState(false);
-  const [newInst, setNewInst] = useState({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "" });
+  // <-- NUEVO: Agregamos serialNumber al estado inicial
+  const [newInst, setNewInst] = useState({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "", serialNumber: "" });
 
-  const [editData, setEditData] = useState({ brand: "", model: "", type: "" });
+  // <-- NUEVO: Agregamos serialNumber al estado de edición
+  const [editData, setEditData] = useState({ brand: "", model: "", type: "", serialNumber: "" });
 
   const selectClasses = "flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300";
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      // NUEVO: Traemos también a los clientes
       const [instData, ordData, custData] = await Promise.all([
         fetchFromAPI("/instruments").catch(() => []),
         fetchFromAPI("/service-orders").catch(() => []),
@@ -80,7 +81,6 @@ export default function InstrumentosPage() {
     loadData();
   }, []);
 
-  // NUEVO: Función para guardar un instrumento nuevo
   const handleCreateInstrument = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -90,8 +90,8 @@ export default function InstrumentosPage() {
         body: JSON.stringify(newInst),
       });
 
-      // Limpiamos y ocultamos el formulario
-      setNewInst({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "" });
+      // Limpiamos y ocultamos el formulario (incluyendo serialNumber)
+      setNewInst({ brand: "", model: "", type: "Guitarra Eléctrica", customerId: "", serialNumber: "" });
       setShowForm(false);
       setShowNewCustomType(false);
       
@@ -131,7 +131,8 @@ export default function InstrumentosPage() {
     const term = searchTerm.toLowerCase();
     const fullName = `${inst.brand} ${inst.model}`.toLowerCase();
     const customer = (inst.customerName || "").toLowerCase();
-    return fullName.includes(term) || customer.includes(term);
+    const serial = (inst.serialNumber || "").toLowerCase(); // Permitir buscar por S/N
+    return fullName.includes(term) || customer.includes(term) || serial.includes(term);
   });
 
   const getActiveOrdersForInstrument = (instrument: Instrument) => {
@@ -151,7 +152,13 @@ export default function InstrumentosPage() {
     const isCustom = !["Guitarra Eléctrica", "Guitarra Acústica", "Bajo Eléctrico"].includes(typeVal);
     
     setShowCustomType(isCustom);
-    setEditData({ brand: instrument.brand, model: instrument.model, type: typeVal });
+    // <-- NUEVO: Cargamos el serialNumber en los datos de edición
+    setEditData({ 
+      brand: instrument.brand, 
+      model: instrument.model, 
+      type: typeVal, 
+      serialNumber: instrument.serialNumber || "" 
+    });
     
     setIsEditing(false);
     setIsModalOpen(true);
@@ -173,13 +180,12 @@ export default function InstrumentosPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
             <Input
               type="text"
-              placeholder="Buscar marca, modelo o dueño..."
+              placeholder="Buscar marca, modelo, dueño o S/N..."
               className="pl-9 bg-white border-zinc-200"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {/* NUEVO: El botón ahora sí abre el formulario */}
           <Button onClick={() => setShowForm(!showForm)} className="bg-amber-600 hover:bg-amber-700 text-white gap-2">
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} 
             {showForm ? "Cancelar" : "Nuevo Instrumento"}
@@ -187,7 +193,7 @@ export default function InstrumentosPage() {
         </div>
       </div>
 
-      {/* NUEVO: Formulario de Creación (Igual que en Clientes) */}
+      {/* Formulario de Creación */}
       {showForm && (
         <Card className="border-amber-500/30 shadow-md max-w-2xl animate-in fade-in slide-in-from-top-4 duration-200">
           <CardHeader>
@@ -207,6 +213,16 @@ export default function InstrumentosPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* NUEVO: Input para Número de Serie */}
+                <div className="space-y-2">
+                  <Label>Número de Serie (Opcional)</Label>
+                  <Input 
+                    value={newInst.serialNumber} 
+                    onChange={(e) => setNewInst({...newInst, serialNumber: e.target.value})} 
+                    placeholder="Ej. US19283746" 
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label>Tipo / Categoría</Label>
                   <select
@@ -240,21 +256,21 @@ export default function InstrumentosPage() {
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Propietario (Cliente)</Label>
-                  <select 
-                    className={selectClasses} 
-                    value={newInst.customerId} 
-                    onChange={(e) => setNewInst({...newInst, customerId: e.target.value})}
-                    required
-                  >
-                    <option value="" disabled>Selecciona al dueño...</option>
-                    {customers.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-2 pt-2 border-t border-zinc-100">
+                <Label>Propietario (Cliente)</Label>
+                <select 
+                  className={selectClasses} 
+                  value={newInst.customerId} 
+                  onChange={(e) => setNewInst({...newInst, customerId: e.target.value})}
+                  required
+                >
+                  <option value="" disabled>Selecciona al dueño...</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-4">
@@ -292,7 +308,15 @@ export default function InstrumentosPage() {
                       <span className="flex h-3 w-3 rounded-full bg-amber-500" title="En taller actualmente" />
                     )}
                   </div>
-                  <div className="text-sm font-medium text-zinc-600 mt-1">{inst.model}</div>
+                  <div className="text-sm font-medium text-zinc-600 mt-1 flex items-center gap-1">
+                    {inst.model}
+                    {/* NUEVO: Mostramos el número de serie sutilmente si existe */}
+                    {inst.serialNumber && (
+                      <span className="text-xs text-zinc-400 font-normal">
+                        (S/N: {inst.serialNumber})
+                      </span>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="text-xs text-zinc-400 uppercase font-semibold mb-1">Propietario</div>
@@ -321,55 +345,73 @@ export default function InstrumentosPage() {
             {!isEditing && (
               <DialogDescription>
                 Dueño registrado: <span className="font-medium text-zinc-900">{selectedInstrument?.customerName || "Sin asignar"}</span>
+                {/* NUEVO: Mostramos el número de serie en la vista de solo lectura */}
+                {selectedInstrument?.serialNumber && (
+                  <> | S/N: <span className="font-medium text-zinc-900">{selectedInstrument.serialNumber}</span></>
+                )}
               </DialogDescription>
             )}
           </DialogHeader>
 
           {isEditing ? (
             <div className="space-y-4 py-2 mt-2 border-t border-zinc-100">
-              <div className="space-y-2">
-                <Label>Marca</Label>
-                <Input value={editData.brand} onChange={(e) => setEditData({...editData, brand: e.target.value})} placeholder="Ej. Gibson, Fender..." />
-              </div>
-              <div className="space-y-2">
-                <Label>Modelo</Label>
-                <Input value={editData.model} onChange={(e) => setEditData({...editData, model: e.target.value})} placeholder="Ej. Les Paul, Stratocaster..." />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Marca</Label>
+                  <Input value={editData.brand} onChange={(e) => setEditData({...editData, brand: e.target.value})} placeholder="Ej. Gibson, Fender..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Modelo</Label>
+                  <Input value={editData.model} onChange={(e) => setEditData({...editData, model: e.target.value})} placeholder="Ej. Les Paul, Stratocaster..." />
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label>Tipo / Categoría</Label>
-                <select
-                  className={selectClasses}
-                  value={showCustomType ? "Otros" : editData.type || "Guitarra Eléctrica"}
-                  onChange={(e) => {
-                    if (e.target.value === "Otros") {
-                      setShowCustomType(true);
-                      setEditData({ ...editData, type: "" }); 
-                    } else {
-                      setShowCustomType(false);
-                      setEditData({ ...editData, type: e.target.value });
-                    }
-                  }}
-                >
-                  <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
-                  <option value="Guitarra Acústica">Guitarra Acústica</option>
-                  <option value="Bajo Eléctrico">Bajo Eléctrico</option>
-                  <option value="Otros">Otros (Especificar)...</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                {/* NUEVO: Edición del Número de Serie */}
+                <div className="space-y-2">
+                  <Label>Número de Serie</Label>
+                  <Input 
+                    value={editData.serialNumber} 
+                    onChange={(e) => setEditData({...editData, serialNumber: e.target.value})} 
+                    placeholder="Ej. US19283746" 
+                  />
+                </div>
 
-                {showCustomType && (
-                  <div className="pt-2 animate-in fade-in slide-in-from-top-2">
-                    <Input
-                      value={editData.type}
-                      onChange={(e) => setEditData({...editData, type: e.target.value})}
-                      placeholder="Ej. Ukulele, Cello, Amplificador..."
-                      autoFocus
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label>Tipo / Categoría</Label>
+                  <select
+                    className={selectClasses}
+                    value={showCustomType ? "Otros" : editData.type || "Guitarra Eléctrica"}
+                    onChange={(e) => {
+                      if (e.target.value === "Otros") {
+                        setShowCustomType(true);
+                        setEditData({ ...editData, type: "" }); 
+                      } else {
+                        setShowCustomType(false);
+                        setEditData({ ...editData, type: e.target.value });
+                      }
+                    }}
+                  >
+                    <option value="Guitarra Eléctrica">Guitarra Eléctrica</option>
+                    <option value="Guitarra Acústica">Guitarra Acústica</option>
+                    <option value="Bajo Eléctrico">Bajo Eléctrico</option>
+                    <option value="Otros">Otros (Especificar)...</option>
+                  </select>
+
+                  {showCustomType && (
+                    <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                      <Input
+                        value={editData.type}
+                        onChange={(e) => setEditData({...editData, type: e.target.value})}
+                        placeholder="Ej. Ukulele, Cello, Amplificador..."
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100">
                 <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isUpdating}>
                   <X className="w-4 h-4 mr-2" /> Cancelar
                 </Button>
