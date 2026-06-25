@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Clock, Wrench, CheckCircle2, Loader2, Music } from "lucide-react";
+import { Activity, Clock, Wrench, CheckCircle2, Loader2, Music, AlertTriangle, Hourglass } from "lucide-react";
 import { fetchFromAPI } from "@/lib/api";
 
 interface ServiceOrder {
@@ -48,13 +48,13 @@ export default function DashboardPage() {
   const activeOrders = orders.filter(o => o.status.toUpperCase() !== "ENTREGADO").length;
   const receivedOrders = orders.filter(o => o.status.toUpperCase() === "RECIBIDO").length;
   const inProcessOrders = orders.filter(o => o.status.toUpperCase() === "EN_PROCESO").length;
+  const waitingOrders = orders.filter(o => o.status.toUpperCase() === "EN_ESPERA").length;
+  const approvalOrders = orders.filter(o => o.status.toUpperCase() === "REQUIERE_APROBACION").length;
+  const approvedByClientOrders = orders.filter(o => o.status.toUpperCase() === "APROBADO_POR_CLIENTE").length;
   const readyOrders = orders.filter(o => o.status.toUpperCase() === "LISTO").length;
 
-  // 2. Extraer solo las últimas 5 órdenes para la tabla
-  // Filtramos para excluir las entregadas y luego tomamos las 5 más recientes
-  const recentOrders = orders
-    .filter(order => order.status.toUpperCase() !== "ENTREGADO")
-    .slice(0, 5);
+  // Mostramos todas las órdenes activas en la tabla, excluyendo las entregadas
+  const recentOrders = orders.filter(order => order.status.toUpperCase() !== "ENTREGADO");
 
   const formatOrderDate = (dateVal: any) => {
     if (!dateVal) return "---";
@@ -69,9 +69,12 @@ export default function DashboardPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status.toUpperCase()) {
-      case "RECIBIDO": return <span className="px-2.5 py-1 rounded-full border bg-blue-500/10 border-blue-500/20 text-blue-600 text-xs font-medium">Recibido</span>;
-      case "EN_PROCESO": return <span className="px-2.5 py-1 rounded-full border bg-orange-500/10 border-orange-500/20 text-orange-600 text-xs font-medium">En Proceso</span>;
-      case "LISTO": return <span className="px-2.5 py-1 rounded-full border bg-emerald-500/10 border-emerald-500/20 text-emerald-600 text-xs font-medium">Listo</span>;
+      case "RECIBIDO": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-blue-500/10 border-blue-500/20 text-blue-600 text-xs font-medium"><Clock className="w-3 h-3 mr-1" />Recibido</span>;
+      case "EN_PROCESO": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-orange-500/10 border-orange-500/20 text-orange-600 text-xs font-medium"><Wrench className="w-3 h-3 mr-1" />En Proceso</span>;
+      case "LISTO": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-emerald-500/10 border-emerald-500/20 text-emerald-600 text-xs font-medium"><CheckCircle2 className="w-3 h-3 mr-1" />Listo</span>;
+      case "EN_ESPERA": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-amber-500/10 border-amber-500/20 text-amber-600 text-xs font-medium"><Hourglass className="w-3 h-3 mr-1" />En espera</span>;
+      case "REQUIERE_APROBACION": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-red-500/10 border-red-500/20 text-red-600 text-xs font-medium"><AlertTriangle className="w-3 h-3 mr-1" />Requiere aprobación</span>;
+      case "APROBADO_POR_CLIENTE": return <span className="inline-flex items-center px-2.5 py-1 rounded-full border bg-emerald-600/10 border-emerald-600/20 text-emerald-700 text-xs font-medium"><CheckCircle2 className="w-3 h-3 mr-1" />Aprobado por cliente</span>;
       default: return <span className="px-2.5 py-1 rounded-full border bg-zinc-500/10 border-zinc-500/20 text-zinc-600 text-xs font-medium">{status}</span>;
     }
   };
@@ -97,11 +100,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Tarjetas de Resumen (Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-amber-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">Órdenes Activas</CardTitle>
-            <Activity className="w-4 h-4 text-amber-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Card className="h-full border-l-4 border-l-amber-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">Órdenes Activas</CardTitle>
+            <Activity className="w-4 h-4 text-amber-500 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{activeOrders}</div>
@@ -109,10 +112,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">Instrumentos Recibidos</CardTitle>
-            <Music className="w-4 h-4 text-blue-500" />
+        <Card className="h-full border-l-4 border-l-blue-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">Instrumentos Recibidos</CardTitle>
+            <Music className="w-4 h-4 text-blue-500 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{receivedOrders}</div>
@@ -120,10 +123,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">En Proceso</CardTitle>
-            <Wrench className="w-4 h-4 text-orange-500" />
+        <Card className="h-full border-l-4 border-l-orange-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">En Proceso</CardTitle>
+            <Wrench className="w-4 h-4 text-orange-500 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{inProcessOrders}</div>
@@ -131,10 +134,43 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">Listos para Entrega</CardTitle>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+        <Card className="h-full border-l-4 border-l-amber-600 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">En Espera</CardTitle>
+            <Hourglass className="w-4 h-4 text-amber-600 shrink-0" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{waitingOrders}</div>
+            <p className="text-xs text-amber-600 mt-1 font-medium">Pausadas temporalmente</p>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full border-l-4 border-l-red-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">Requieren Vo.Bo.</CardTitle>
+            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{approvalOrders}</div>
+            <p className="text-xs text-red-500 mt-1 font-medium">Esperando aprobación del cliente</p>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full border-l-4 border-l-emerald-600 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">Aprobados por cliente</CardTitle>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{approvedByClientOrders}</div>
+            <p className="text-xs text-emerald-600 mt-1 font-medium">Autorización confirmada</p>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full border-l-4 border-l-emerald-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-zinc-600 leading-tight">Listos para Entrega</CardTitle>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{readyOrders}</div>

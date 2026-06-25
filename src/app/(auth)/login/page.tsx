@@ -1,4 +1,4 @@
-"use client"; // <-- ¡Vital! Le dice a Next.js que este componente usa interactividad en el navegador
+"use client"; 
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -23,8 +23,15 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
+    // --- NUEVO: Limpiamos cualquier rastro de tokens fantasmas ---
+    // (Ajusta esto si usas cookies o sessionStorage en lugar de localStorage)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token'); 
+      sessionStorage.removeItem('token');
+    }
+
     try {
-      // 1. Llamamos a tu endpoint en Spring Boot
+      // 1. Llamamos a tu endpoint en Spring Boot (ahora irá limpio, sin headers basura)
       const response = await fetchFromAPI('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),

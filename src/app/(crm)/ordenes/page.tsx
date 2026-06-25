@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   ClipboardList, Plus, Loader2, Clock, CheckCircle2, 
-  Wrench, Search, Archive, User, Guitar, Activity, X, Save 
+  Wrench, Search, Archive, User, Guitar, Activity, X, Save, AlertTriangle, Hourglass 
 } from "lucide-react";
 import { fetchFromAPI } from "@/lib/api";
 import OrderDetailModal from "@/components/OrderDetailModal";
@@ -141,6 +141,10 @@ export default function OrdenesPage() {
   }, [formData.existingCustomerId, allInstruments]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (newStatus === "REQUIERE_APROBACION" || newStatus === "APROBADO_POR_CLIENTE") {
+      return;
+    }
+
     try {
       setUpdatingId(orderId);
       setError("");
@@ -213,6 +217,9 @@ export default function OrdenesPage() {
       case "EN_PROCESO": return { color: "text-orange-500 bg-orange-500/10 border-orange-500/20", icon: <Wrench className="w-4 h-4 mr-1" />, label: "En Proceso" };
       case "LISTO": return { color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", icon: <CheckCircle2 className="w-4 h-4 mr-1" />, label: "Listo" };
       case "ENTREGADO": return { color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20", icon: <Archive className="w-4 h-4 mr-1" />, label: "Entregado" };
+      case "EN_ESPERA": return { color: "text-amber-600 bg-amber-500/10 border-amber-500/20", icon: <Hourglass className="w-4 h-4 mr-1" />, label: "En espera" };
+      case "REQUIERE_APROBACION": return { color: "text-red-500 bg-red-500/10 border-red-500/20", icon: <AlertTriangle className="w-4 h-4 mr-1" />, label: "Requiere aprobación" };
+      case "APROBADO_POR_CLIENTE": return { color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20", icon: <CheckCircle2 className="w-4 h-4 mr-1" />, label: "Aprobado por cliente" };
       default: return { color: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20", icon: <Clock className="w-4 h-4 mr-1" />, label: status };
     }
   };
@@ -524,13 +531,16 @@ export default function OrdenesPage() {
                         value={order.status}
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        disabled={updatingId === order.id}
+                        disabled={updatingId === order.id || order.status === "REQUIERE_APROBACION" }
                         className="text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1 cursor-pointer hover:bg-zinc-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium text-zinc-700 disabled:opacity-50"
                       >
                         <option value="RECIBIDO">Mover a: Recibido</option>
                         <option value="EN_PROCESO">Mover a: En Proceso</option>
+                        <option value="EN_ESPERA">Mover a: En espera</option>
                         <option value="LISTO">Mover a: Listo</option>
                         <option value="ENTREGADO">Mover a: Entregado</option>
+                        <option value="REQUIERE_APROBACION" disabled>Esperando aprobación</option>
+                        <option value="APROBADO_POR_CLIENTE" disabled>Mover a: Aprobado por cliente</option>
                       </select>
                     </div>
                   </div>
