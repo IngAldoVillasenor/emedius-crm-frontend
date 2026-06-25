@@ -194,7 +194,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full" variant="outline" onClick={() => openCalendly("recepcion", "¡Hola! Me interesa agendar la recepción para el paquete: Pa'l Apuro.")}>
+                <Button className="w-full" variant="outline" onClick={() => openCalendly("recepcion", "")}>
                   Agendar Pa'l Apuro
                 </Button>
               </div>
@@ -220,7 +220,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-white" onClick={() => openCalendly("recepcion", "¡Hola! Me interesa agendar la recepción para el paquete: Pa'l Huesero.")}>
+                <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-white" onClick={() => openCalendly("recepcion", "")}>
                   Agendar Pa'l Huesero
                 </Button>
               </div>
@@ -250,7 +250,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0" onClick={() => openCalendly("recepcion", "¡Hola! Quiero el tratamiento completo para mi instrumento. Agendando paquete: Pa'l Rockstar.")}>
+                <Button className="w-full bg-amber-600 hover:bg-amber-500 text-white border-0" onClick={() => openCalendly("recepcion", "")}>
                   Agendar Rockstar
                 </Button>
               </div>
@@ -274,7 +274,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <div className="p-6 mt-auto">
-                <Button className="w-full border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white" variant="outline" onClick={() => openCalendly("recepcion", "¡Hola! Quiero el servicio definitivo para mi guitarra. Agendando paquete: Pa' La Leyenda.")}>
+                <Button className="w-full border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white" variant="outline" onClick={() => openCalendly("recepcion", "")}>
                   Agendar La Leyenda
                 </Button>
               </div>
