@@ -283,7 +283,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-12 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 inline-block px-6 py-2 rounded-full mx-auto">
-            <span className="text-amber-600 font-bold">*</span> Ningún servicio incluye cuerdas.
+            <span className="text-amber-600 font-bold">*</span> Ningún servicio incluye cuerdas o refacciones.
           </div>
         </div>
       </section>
